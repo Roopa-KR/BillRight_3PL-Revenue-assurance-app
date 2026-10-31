@@ -1,0 +1,6 @@
+REF,PERIOD,EXPENSE_CATEGORY,DESCRIPTION,AMOUNT,SOURCE_TYPE,PAYMENT_RECIPIENT_TYPE,CUSTOMER_CODE
+PAY-OPS,2026-08,warehouse_operators,BSP operator payroll,56000,payroll,direct_payroll,
+PAY-FORK,2026-08,forklift_operators,Forklift operator payroll,16000,payroll,direct_payroll,
+PAY-SUP,2026-08,supervisors,Supervisor payroll,16000,payroll,direct_payroll,
+PAY-MGR,2026-08,managers,Warehouse manager payroll,10000,payroll,direct_payroll,
+PAY-ADM,2026-08,administration,Administration staff payroll,8000,payroll,direct_payroll,

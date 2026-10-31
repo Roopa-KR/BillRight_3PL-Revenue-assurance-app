@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<p class="small"><a href="/costs#matrix">← Allocation matrix</a></p><h1>{{ label }}</h1><p class="sub">{{ c.period.label }} · pool lines, driver and calculation.</p>
+<h2>Expense lines in the pool</h2><table><thead><tr><th>Description</th><th>Source</th><th>Customer (direct)</th><th class="n">Amount</th></tr></thead><tbody>
+{% for x in d.lines %}<tr><td>{{ x.description }}</td><td>{{ x.source_type }} · {{ x.source_ref }}</td><td>{{ customers[x.customer_id].code if x.customer_id else '—' }}</td><td class="n">{{ x.amount|money }}</td></tr>{% endfor %}</tbody></table>
+<h2>Driver</h2>{% for dr in d.drivers %}<p>{{ drivers_l.get(dr.driver_type) }} · {{ dr.description }} · approved {{ dr.approved_at|date }}{% if dr.is_proxy %} · <span class="tag">Proxy: completed-line share</span>{% endif %}{% if dr.data_label %} · <span class="badge synth">{{ dr.data_label }}</span>{% endif %}</p>{% else %}<p class="muted">No driver used (direct or exception).</p>{% endfor %}
+{% if d.quantities %}<table><thead><tr><th>Customer</th><th class="n">Driver quantity</th><th>Source</th></tr></thead><tbody>{% for q in d.quantities %}<tr><td>{{ customers[q.customer_id].code if q.customer_id else 'Unassigned' }}</td><td class="n">{{ q.quantity|qty }}</td><td>{{ q.source_ref }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+<h2>Allocation</h2><table><thead><tr><th>Customer</th><th>Method</th><th class="n">Share</th><th class="n">Amount</th><th>Note</th></tr></thead><tbody>
+{% for a in d.rows %}<tr><td>{{ customers[a.customer_id].code if a.customer_id else 'Unassigned' }}</td><td>{{ a.method }}</td><td class="n">{{ (a.share*100)|pct if a.share is not none else '—' }}</td><td class="n">{{ a.amount|money }}</td><td>{{ a.exception or '' }}</td></tr>{% endfor %}</tbody></table>
+<p class="small muted">Allocated customer cost = pool × customer’s share of the approved driver; cents split by largest remainder so the parts add up exactly to the pool.</p>
+{% endblock %}

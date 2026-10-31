@@ -1,0 +1,246 @@
+{
+ "periods": [
+  {
+   "label": "2026-08",
+   "start": "2026-08-01",
+   "end": "2026-08-31",
+   "type": "month"
+  }
+ ],
+ "charge_codes": [
+  {
+   "code": "RECEIVING",
+   "name": "Receiving",
+   "category": "receiving",
+   "uom": "pallet",
+   "event_type": "receipt"
+  },
+  {
+   "code": "STORAGE",
+   "name": "Storage",
+   "category": "storage",
+   "uom": "pallet_month",
+   "event_type": "storage"
+  },
+  {
+   "code": "PICKING",
+   "name": "Picking",
+   "category": "picking",
+   "uom": "line",
+   "event_type": "pick_line"
+  },
+  {
+   "code": "PACKING",
+   "name": "Packing",
+   "category": "packing",
+   "uom": "order",
+   "event_type": "order_completed"
+  },
+  {
+   "code": "TRANSPORT",
+   "name": "Transportation (cost + markup)",
+   "category": "transport",
+   "uom": null,
+   "event_type": null
+  },
+  {
+   "code": "SPECIAL_PROJECTS",
+   "name": "Special projects",
+   "category": "special_project",
+   "uom": "hour",
+   "event_type": "special_project_hours",
+   "manual": true
+  }
+ ],
+ "settings": {
+  "customer_resolution.join_path": {
+   "pick_line": [
+    {
+     "from": "order_ref"
+    },
+    {
+     "table": "ORDER_HEADER",
+     "match": "ORDER_ID",
+     "take": "CUSTOMER_CODE"
+    },
+    {
+     "identity_map": "customer_code"
+    }
+   ],
+   "order_completed": [
+    {
+     "from": "order_ref"
+    },
+    {
+     "table": "ORDER_HEADER",
+     "match": "ORDER_ID",
+     "take": "CUSTOMER_CODE"
+    },
+    {
+     "identity_map": "customer_code"
+    }
+   ],
+   "receipt": [
+    {
+     "from": "attribute:owner_code"
+    },
+    {
+     "identity_map": "customer_code"
+    }
+   ],
+   "storage": [
+    {
+     "from": "attribute:customer_code"
+    },
+    {
+     "identity_map": "customer_code"
+    }
+   ]
+  },
+  "gini.worktype_activity": {
+   "1": "PICK"
+  },
+  "leakage.approval_threshold": "5000",
+  "leakage.back_billing_window_days": "90",
+  "labor.cost_basis": "employee_labor_cost",
+  "close.margin_range_low": "10",
+  "close.margin_range_high": "30",
+  "drift.renewal_warning_days": "60",
+  "accounting.adapter": "file"
+ },
+ "drivers": [
+  {
+   "category": "warehouse_operators",
+   "driver_type": "paid_labor_hours_by_customer",
+   "description": "Paid operator hours attributed to customer tasks (illustrative)"
+  },
+  {
+   "category": "forklift_operators",
+   "driver_type": "equipment_hours_by_customer",
+   "description": "Documented forklift hours by customer (illustrative)"
+  },
+  {
+   "category": "supervisors",
+   "driver_type": "documented_time_share",
+   "description": "Documented supervision time, % (document: 40/35/25)"
+  },
+  {
+   "category": "managers",
+   "driver_type": "documented_time_share",
+   "description": "Documented dedicated management time, % (illustrative)"
+  },
+  {
+   "category": "administration",
+   "driver_type": "transactions_by_customer",
+   "description": "Administrative workload: documents processed (illustrative)"
+  },
+  {
+   "category": "warehouse_rent",
+   "driver_type": "pallet_days",
+   "description": "Occupied pallet-days (illustrative)"
+  },
+  {
+   "category": "utilities",
+   "driver_type": "metered_usage",
+   "description": "Sub-metered usage share (illustrative)"
+  },
+  {
+   "category": "equipment",
+   "driver_type": "equipment_hours_by_customer",
+   "description": "Equipment hours used (illustrative)"
+  },
+  {
+   "category": "packaging",
+   "driver_type": "materials_consumed",
+   "description": "Packaging materials consumed (illustrative)"
+  },
+  {
+   "category": "software",
+   "driver_type": "transactions_by_customer",
+   "description": "WMS transactions (illustrative)"
+  },
+  {
+   "category": "other_overhead",
+   "driver_type": "transactions_by_customer",
+   "description": "Documented allocation rule: transactions (illustrative)"
+  },
+  {
+   "category": "transport_carriers",
+   "driver_type": "direct",
+   "description": "Actual freight bill by customer (direct)"
+  }
+ ],
+ "imports": [
+  [
+   "gini_order_header",
+   "02_order_header.csv"
+  ],
+  [
+   "gini_ti102c",
+   "03_TI102C_completed_picking.csv"
+  ],
+  [
+   "gini_ti202",
+   "04_TI202_receiving.csv"
+  ],
+  [
+   "storage_activity",
+   "05_storage_activity.csv"
+  ],
+  [
+   "rate_card",
+   "06_rate_card.csv"
+  ],
+  [
+   "expense_ledger",
+   "08_expense_ledger_payroll.csv"
+  ],
+  [
+   "vendor_invoices",
+   "09_vendor_invoices.csv"
+  ],
+  [
+   "employee_labor_cost",
+   "10_employee_labor_cost.csv"
+  ],
+  [
+   "labor_time_attribution",
+   "11_labor_time_attribution.csv"
+  ],
+  [
+   "driver_quantities",
+   "12_driver_quantities.csv"
+  ],
+  [
+   "invoice_lines",
+   "07_invoice_lines.csv"
+  ]
+ ],
+ "manual_entries": [
+  {
+   "customer": "RETAILCO",
+   "charge": "SPECIAL_PROJECTS",
+   "quantity": 200,
+   "uom": "hour",
+   "date": "2026-08-20",
+   "note": "Special project hours for RetailCo (illustrative)"
+  },
+  {
+   "customer": "FOODCO",
+   "charge": "SPECIAL_PROJECTS",
+   "quantity": 105,
+   "uom": "hour",
+   "date": "2026-08-20",
+   "note": "Special project hours for FoodCo (illustrative)"
+  },
+  {
+   "customer": "PARTSCO",
+   "charge": "SPECIAL_PROJECTS",
+   "quantity": 250,
+   "uom": "hour",
+   "date": "2026-08-20",
+   "note": "Special project hours for PartsCo (illustrative)"
+  }
+ ],
+ "label": "Illustrative: BSP worked example; driver quantities constructed to reproduce the document's allocation split."
+}

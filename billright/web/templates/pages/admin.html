@@ -1,0 +1,48 @@
+{% extends "base.html" %}{% block content %}
+<h1>Admin</h1><p class="sub">Users, settings, charge codes, periods, allocation drivers and the audit log. Administrators configure; they cannot approve rates or decide leakage.</p>
+<nav class="tabs">{% for t, l in [('users','Users and scopes'),('settings','Settings'),('charges','Charge codes'),('periods','Periods'),('drivers','Allocation drivers'),('audit','Audit log')] %}<a href="?tab={{ t }}" class="{{ 'on' if tab==t }}">{{ l }}</a>{% endfor %}</nav>
+{% set can = c.cur.can('admin.config') %}
+{% if tab == 'users' %}
+<div class="tablewrap"><table><thead><tr><th>User</th><th>Roles</th><th>Scope</th><th>Active</th>{% if can %}<th>Change</th>{% endif %}</tr></thead><tbody>
+{% for u in users %}<tr><td>{{ u.name }}<div class="small muted">{{ u.email }}</div></td><td>{{ roles[u.id]|map('replace','_',' ')|join(', ') }}</td>
+<td class="small">{% for s in scopes[u.id] %}{{ 'Whole site' if s.customer_id is none else (custs[s.customer_id].code if s.customer_id in custs else s.customer_id) }}{{ ', ' if not loop.last }}{% endfor %}</td><td>{{ 'Yes' if u.active else 'No' }}</td>
+{% if can %}<td><details><summary>Edit</summary><form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="user_update"><input type="hidden" name="user_id" value="{{ u.id }}">
+{% for r in all_roles %}<label style="font-weight:400"><input type="checkbox" name="roles" value="{{ r }}" {{ 'checked' if r in roles[u.id] }}> {{ role_labels[r] }}</label>{% endfor %}
+<label for="cs{{ u.id }}">Customers (none selected = whole site)</label><select id="cs{{ u.id }}" name="customers" multiple size="4">{% for id, cu in custs.items() %}<option value="{{ id }}" {{ 'selected' if id in scopes[u.id]|map(attribute='customer_id')|list }}>{{ cu.code }}</option>{% endfor %}</select>
+<label style="font-weight:400"><input type="checkbox" name="active" value="1" {{ 'checked' if u.active }}> Active</label><button class="btn sec">Save</button></form></details></td>{% endif %}</tr>{% endfor %}</tbody></table></div>
+{% if can %}<details class="card" style="margin-top:12px"><summary>Add a user</summary><form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="user">
+<label for="em">E-mail (matches the SSO e-mail claim)</label><input id="em" type="email" name="email" required><label for="nm">Name</label><input id="nm" type="text" name="name" required>
+<fieldset style="border:0;padding:0"><legend><strong>Roles</strong></legend>{% for r in all_roles %}<label style="font-weight:400"><input type="checkbox" name="roles" value="{{ r }}"> {{ role_labels[r] }}</label>{% endfor %}</fieldset>
+<label for="ucs">Customers (none = whole site)</label><select id="ucs" name="customers" multiple size="4">{% for id, cu in custs.items() %}<option value="{{ id }}">{{ cu.code }}</option>{% endfor %}</select>
+<button class="btn" style="margin-top:8px">Add user</button></form></details>{% endif %}
+{% elif tab == 'settings' %}
+<p class="small">No setting has a built-in default. A required setting that is empty blocks the step that needs it and says which setting to fill.</p>
+<div class="tablewrap"><table><thead><tr><th>Setting</th><th>Description</th><th>Required for</th><th>Value</th></tr></thead><tbody>
+{% for st in settings %}<tr><td class="small"><code>{{ st.key }}</code></td><td class="small">{{ st.spec.desc }}</td><td class="small">{% if st.spec.required %}<span class="status {{ 'bad' if st.value in (None,'') else 'ok' }}">{{ 'Required: ' ~ st.spec.required }}</span>{% else %}Optional{% endif %}</td>
+<td>{% if can %}<form method="post" class="filters" style="margin:0">{{ ui.csrf() }}<input type="hidden" name="action" value="setting"><input type="hidden" name="key" value="{{ st.key }}"><input type="text" name="value" value="{{ st.value or '' }}" aria-label="{{ st.key }}" style="min-width:200px"><button class="btn sec">Save</button></form>{% else %}{{ st.value or '—' }}{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% elif tab == 'charges' %}
+<div class="tablewrap"><table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Prices events of type</th><th>Manual capture</th></tr></thead><tbody>
+{% for ch in charges %}<tr><td>{{ ch.code }}</td><td>{{ ch.name }}</td><td>{{ ch.category }}</td><td>{{ ch.default_uom or '—' }}</td><td>{{ ch.event_type or '— (cost-based / fixed fee)' }}</td><td>{{ 'Yes' if ch.manual_capture else 'No' }}</td></tr>{% endfor %}</tbody></table></div>
+{% if can %}<details class="card" style="margin-top:12px"><summary>Add a charge code</summary><form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="charge"><div class="grid2">
+<div><label for="cd">Code</label><input id="cd" type="text" name="code" required></div><div><label for="cn">Name</label><input id="cn" type="text" name="name" required></div>
+<div><label for="ct">Category</label><select id="ct" name="category">{% for x in categories %}<option>{{ x }}</option>{% endfor %}</select></div><div><label for="cuom">Default unit</label><input id="cuom" type="text" name="uom"></div>
+<div><label for="cev">Event type it prices (pick_line, order_completed, receipt, storage, …)</label><input id="cev" type="text" name="event_type"></div><div><label style="font-weight:400;margin-top:30px"><input type="checkbox" name="manual" value="1"> Capturable on the Work capture form</label></div></div>
+<label for="cde">Description</label><input id="cde" type="text" name="description"><button class="btn" style="margin-top:8px">Add</button></form></details>{% endif %}
+{% elif tab == 'periods' %}
+<div class="tablewrap"><table><thead><tr><th>Label</th><th>Type</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>{% for p in c.hdr.periods %}<tr><td>{{ p.label }}</td><td>{{ p.period_type }}</td><td>{{ p.start_date|date }}</td><td>{{ p.end_date|date }}</td><td>{{ ui.status(p.status) }}</td></tr>{% endfor %}</tbody></table></div>
+{% if can %}<details class="card" style="margin-top:12px"><summary>Add a period</summary><form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="period"><div class="grid2">
+<div><label for="pl">Label</label><input id="pl" type="text" name="label" required></div><div><label for="pt">Type</label><select id="pt" name="period_type"><option>week</option><option>month</option></select></div>
+<div><label for="ps">Start</label><input id="ps" type="date" name="start" required></div><div><label for="pe">End (inclusive)</label><input id="pe" type="date" name="end" required></div></div><button class="btn" style="margin-top:8px">Add</button></form></details>{% endif %}
+{% elif tab == 'drivers' %}
+<p><a href="/admin/drivers">Driver quantities and approvals →</a></p>
+<div class="tablewrap"><table><thead><tr><th>Category</th><th>Driver</th><th>Description</th><th>Valid</th><th>Status</th></tr></thead><tbody>{% for d in drivers %}<tr><td>{{ cat_labels[d.expense_category] }}</td><td>{{ drv_labels[d.driver_type] }}</td><td class="small">{{ d.description }}</td><td class="small">{{ d.valid_from|date }} – {{ d.valid_to|date if d.valid_to else 'open' }}</td><td>{{ ui.status('approved' if d.status=='approved' else 'draft') }}</td></tr>{% endfor %}</tbody></table></div>
+{% if can %}<details class="card" style="margin-top:12px"><summary>Define a driver (a controller approves it)</summary><form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="driver"><div class="grid2">
+<div><label for="dc">Expense category</label><select id="dc" name="category">{% for x in expense_categories %}<option value="{{ x }}">{{ cat_labels[x] }}</option>{% endfor %}</select></div>
+<div><label for="dt">Driver type</label><select id="dt" name="driver_type">{% for x in driver_types %}<option value="{{ x }}">{{ drv_labels[x] }}</option>{% endfor %}</select></div>
+<div><label for="dv">Valid from</label><input id="dv" type="date" name="valid_from" required></div></div><label for="dd">How it is measured</label><input id="dd" type="text" name="description" required><button class="btn" style="margin-top:8px">Save draft</button></form></details>{% endif %}
+{% else %}
+<form class="filters" method="get"><input type="hidden" name="tab" value="audit"><div><label for="ae">Entity</label><input id="ae" type="text" name="entity" value="{{ request.args.get('entity','') }}"></div>
+<div><label for="aa">Action contains</label><input id="aa" type="text" name="action_like" value="{{ request.args.get('action_like','') }}"></div><div><label for="au">User</label><select id="au" name="user"><option value="">All</option>{% for id, n in unames.items() %}<option value="{{ id }}" {{ 'selected' if request.args.get('user') == id|string }}>{{ n }}</option>{% endfor %}</select></div><div><button class="btn sec">Filter</button></div></form>
+<div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Entity</th><th>Before</th><th>After</th><th>Reason</th></tr></thead><tbody>
+{% for a in audit %}<tr><td class="nowrap small">{{ a.at|date }}</td><td>{{ unames.get(a.user_id, 'system') }}</td><td>{{ a.action }}</td><td>{{ a.entity }} {{ a.entity_id }}</td><td class="small"><code>{{ a.before|tojson|truncate(120) if a.before }}</code></td><td class="small"><code>{{ a.after|tojson|truncate(120) if a.after }}</code></td><td class="small">{{ a.reason or '' }}</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}{% endblock %}

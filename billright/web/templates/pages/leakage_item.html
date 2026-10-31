@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% block content %}
+<p class="small"><a href="/leakage">← Leakage review</a> · Item {{ it.id }} · {{ row.customer_name }} · {{ row.charge_name }} · {{ row.period }}</p>
+<h2 style="margin-top:4px">1. What happened</h2>
+<p class="what">{{ row.what }}</p>
+<p>{{ ui.dir(it.direction) }} {{ ui.status(it.status) }} <span class="tag">{{ rule_names[it.rule_code] }} · {{ it.rule_code }}</span>{% for a in row.also %}<span class="tag">also matches {{ a }}</span>{% endfor %}</p>
+<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<div class="kpi"><div class="v">{{ it.billable_amount|money }}</div><div class="l">Billable {{ ui.info('billable') }}</div><div class="d">{{ it.billable_quantity|qty }} units</div></div>
+<div class="kpi"><div class="v">{{ it.billed_amount|money }}</div><div class="l">Billed {{ ui.info('billed') }}</div><div class="d">{{ it.billed_quantity|qty }} units</div></div>
+<div class="kpi"><div class="v">{{ it.gap_amount|money }}</div><div class="l">Gap {{ ui.info('gap') }}</div><div class="d">{{ 'Possible credit' if it.direction == 'over' else 'Under-billing' }}</div></div>
+</div>
+<h2>2. Why we think so</h2>
+<div class="grid2">
+<div class="card"><h3>Contract rate</h3>{% if ev.rate %}<p>{{ ev.contract.reference }} · rate-card version {{ ev.version.version_no }} ({{ ev.version.status }}, approved {{ ev.version.approved_at|date }})</p>
+<p>{{ ev.rate.pricing_method|replace('_',' ') }} · {{ ev.rate.unit_price|qty if ev.rate.unit_price is not none else '—' }} per {{ ev.rate.uom or '—' }}{% if ev.rate.minimum_charge %} · minimum {{ ev.rate.minimum_charge|money }}{% endif %} · valid from {{ ev.rate.valid_from|date }}{% if ev.rate.valid_to %} to {{ ev.rate.valid_to|date }}{% endif %}</p>
+<p class="small">Billable = {{ it.billable_quantity|qty }} × {{ it.contract_unit_price|qty if it.contract_unit_price is not none else 'rate' }} = {{ it.billable_amount|money }} (rounded once to cents)</p>
+{% else %}<p class="muted">No rated events behind this item (billable is zero).</p>{% endif %}</div>
+<div class="card"><h3>Invoice lines</h3>{% if not ev.invoices %}<p><strong>No invoice line found</strong> for this customer, charge and period.</p>{% else %}
+<table><thead><tr><th>Invoice</th><th class="n">Qty</th><th class="n">Unit price</th><th class="n">Amount</th><th>Posted</th></tr></thead><tbody>
+{% for l in ev.invoices %}<tr><td>{{ l.invoice_number }}/{{ l.line_number }}</td><td class="n">{{ l.quantity|qty }}</td><td class="n">{{ l.unit_price|qty }}</td><td class="n">{{ l.amount|money }}</td><td>{{ l.posted_on|date }}</td></tr>{% endfor %}</tbody></table>{% endif %}</div>
+</div>
+<div class="card"><h3>Events ({{ ev.total_events|qty }}){% if ev.total_events > ev.events|length %} · first {{ ev.events|length }} shown{% endif %}</h3>
+{% if not ev.labor_source %}<p class="small muted">Labor minutes: Not available — no labor-time source imported for these orders.</p>{% else %}<p class="small muted">Labor minutes are those of the warehouse order(s) that picked the line or order; a warehouse order can serve several orders.</p>{% endif %}
+<div class="tablewrap" style="max-height:420px"><table><thead><tr><th>Source record</th><th>Service date</th><th>Order</th><th>Task</th><th>Worker</th><th>Created</th><th>Completed</th><th class="n">Qty</th><th class="n">Amount</th><th class="n">Labor min (order)</th></tr></thead><tbody>
+{% for e in ev.events %}<tr><td class="nowrap">{{ e.source_ref }}</td><td class="nowrap">{{ e.service_date|date }}</td><td>{{ e.order_ref or '—' }}</td><td>{{ e.task_ref or '—' }}</td><td>{{ e.worker or '—' }}</td>
+<td class="nowrap small">{{ e.created_at|date if e.created_at else '—' }}</td><td class="nowrap small">{{ e.completed_at|date if e.completed_at else '—' }}</td><td class="n">{{ e.quantity|qty }}</td><td class="n">{{ e.amount|money }}</td>
+<td class="n">{{ e.labor_minutes if e.labor_minutes is not none else '—' }}</td></tr>{% if e.note %}<tr><td colspan="10" class="small">Note: {{ e.note }}{% if e.photo %} · photo attached{% endif %}</td></tr>{% endif %}{% endfor %}</tbody></table></div></div>
+<h2>3. What to do</h2>
+<div class="grid2">
+<div class="card">
+{% if period.status == 'closed' %}<p class="muted">The period is closed; decisions are frozen.</p>
+{% elif it.status in ('new','under_review') or (it.status == 'decided' and not needs_approval) %}
+ {% if c.cur.can('leakage.decide') %}<form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="decide">
+ <fieldset style="border:0;padding:0"><legend><strong>Decision</strong></legend>{% for d in decisions %}<label style="font-weight:400"><input type="radio" name="decision" value="{{ d }}" required {{ 'checked' if it.decision == d }}> {{ labels[d] }}</label>{% endfor %}</fieldset>
+ <label for="rc">Waive reason</label><select id="rc" name="reason_category"><option value="">—</option>{% for w in waive %}<option value="{{ w }}">{{ w|replace('_',' ')|capitalize }}</option>{% endfor %}</select>
+ <label for="rs">Reason / note</label><textarea id="rs" name="reason" rows="2"></textarea>
+ <p class="small muted">{% if needs_approval %}Above the approval threshold ({{ threshold|money }}): a second person must approve.{% elif threshold is none %}Approval threshold not set.{% else %}At or below the approval threshold ({{ threshold|money }}).{% endif %}</p>
+ <button class="btn">Record decision</button></form>{% endif %}
+ {% if it.status == 'new' and c.cur.can('leakage.update') %}<form method="post" style="margin-top:8px">{{ ui.csrf() }}<input type="hidden" name="action" value="review"><button class="btn sec">Start review</button></form>{% endif %}
+{% elif it.status == 'decided' and needs_approval %}
+ <p>Decided <strong>{{ labels[it.decision] }}</strong> by {{ users.get(it.decided_by) }} · {{ it.decided_at|date }}. {% if it.decision_reason %}Reason: {{ it.decision_reason }}{% endif %}</p>
+ {% if c.cur.can('leakage.approve') and it.decided_by != c.cur.user.id %}<form method="post" class="inline">{{ ui.csrf() }}<input type="hidden" name="action" value="approve"><button class="btn">Approve</button></form>
+ <form method="post" style="margin-top:8px">{{ ui.csrf() }}<input type="hidden" name="action" value="send_back"><label for="sb">Send back with reason</label><input id="sb" type="text" name="reason" required><button class="btn sec" style="margin-top:6px">Send back</button></form>
+ {% else %}<p class="muted">Waiting for approval by another finance controller.</p>{% endif %}
+{% else %}<p>{{ ui.status(it.status) }} {% if it.decision %}<strong>{{ labels[it.decision] }}</strong> by {{ users.get(it.decided_by) }}{% if it.approved_by %}, approved by {{ users.get(it.approved_by) }}{% endif %}.{% endif %}</p>{% endif %}
+{% if it.invoiced_amount is not none %}<p>{{ ui.status('reconciled') }} Invoiced {{ it.invoiced_amount|money }} on {{ it.invoiced_on|date }}.</p>{% endif %}
+</div>
+<div class="card"><h3>Notes and history</h3>
+{% for n in notes %}<p class="small"><strong>{{ users.get(n.author) }}</strong> · {{ n.created_at|date }}<br>{{ n.text }}</p>{% endfor %}
+{% if c.cur.can('leakage.note') %}<form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="note"><label for="nt">Add evidence note</label><textarea id="nt" name="text" rows="2" required></textarea><button class="btn sec" style="margin-top:6px">Add note</button></form>{% endif %}
+<details style="margin-top:10px"><summary>History ({{ history|length }})</summary><ul class="small">{% for h in history %}<li>{{ h.at|date }} · {{ users.get(h.user_id, 'system') }} · {{ h.action }}{% if h.reason %} · {{ h.reason }}{% endif %}</li>{% endfor %}</ul></details>
+</div></div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block content %}
+<h1>Recovery, margin and approvals</h1><p class="sub">{{ c.period.label }} · what is confirmed, what is invoiced, and what waits for you.</p>
+<div class="kpis">
+{{ ui.kpi(k.confirmed|money0, 'Leakage confirmed this period', 'confirmed', '/leakage?status=decided', k.confirmed, kprev.confirmed if kprev else None) }}
+{{ ui.kpi(k.invoiced|money0, 'Leakage invoiced this period', 'invoiced', '/leakage', k.invoiced, kprev.invoiced if kprev else None) }}
+{{ ui.kpi(k.site_margin|pct, 'Site margin', 'site_margin', '/customers', k.site_margin, kprev.site_margin if kprev else None, 'pts') }}
+{{ ui.kpi(k.approvals_waiting, 'Approvals waiting', 'approvals', '#approvals', None, None, 'count') }}
+</div>
+{{ ui.chart(chart) }}
+<div class="grid2">
+<div class="card" id="approvals"><h3>Approvals</h3>{% if not k.approvals %}<p class="muted">Nothing waits for approval.</p>{% else %}
+<table><thead><tr><th>Type</th><th>Item</th><th></th></tr></thead><tbody>{% for a in k.approvals %}<tr><td>{{ a.kind }}</td><td>{{ a.label }}</td><td><a href="{{ a.link }}">Open</a></td></tr>{% endfor %}</tbody></table>{% endif %}</div>
+<div class="card"><h3>Close checklist · {{ c.period.label }}</h3>{% for ch in checks %}<div class="check">{% if ch.passed %}<span class="status ok">✓ Passed</span>{% elif ch.acknowledged %}<span class="status warn">✓ Acknowledged</span>{% else %}<span class="status bad">✗ Failed</span>{% endif %}<div><strong>{{ ch.no }}.</strong> {{ ch.title }}<div class="small muted">{{ ch.detail }}</div></div></div>{% endfor %}
+<p><a href="/close">Go to period close →</a></p></div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+VENDOR,VENDOR_TYPE,INVOICE_NUMBER,LINE_NUMBER,INVOICE_DATE,PERIOD,PO_REF,SERVICE,EXPENSE_CATEGORY,EXPENSE_ACCOUNT,CUSTOMER_CODE,SHIPMENT_REF,AMOUNT,CUSTOMER_PAYS_CARRIER
+XYZ Staffing Agency,staffing_agency,XYZ-0826,1,2026-08-31,2026-08,,Outsourced warehouse operators,warehouse_operators,,,,24000,
+ABC Transport,carrier,ABC-0826,1,2026-08-31,2026-08,,Trucking for RetailCo,transport_carriers,,RETAILCO,,30000,
+ABC Transport,carrier,ABC-0826,2,2026-08-31,2026-08,,Trucking for FoodCo,transport_carriers,,FOODCO,,18000,
+ABC Transport,carrier,ABC-0826,3,2026-08-31,2026-08,,Trucking for PartsCo,transport_carriers,,PARTSCO,,12000,
+Warehouse Landlord LLC,landlord,RENT-0826,1,2026-08-01,2026-08,,Warehouse rent,warehouse_rent,,,,30000,
+City Utilities,facility_services,UTIL-0826,1,2026-08-31,2026-08,,Electricity and water,utilities,,,,6000,
+LiftRent Co,equipment,EQ-0826,1,2026-08-31,2026-08,,Equipment rental and maintenance,equipment,,,,7000,
+BoxSupply Inc,packaging,PK-0826,1,2026-08-31,2026-08,,Packaging materials,packaging,,,,9000,
+WMS Vendor,it,IT-0826,1,2026-08-31,2026-08,,WMS and software,software,,,,4000,
+SafeGuard Services,facility_services,SG-0826,1,2026-08-31,2026-08,,"Security, insurance, cleaning and other",other_overhead,,,,10000,

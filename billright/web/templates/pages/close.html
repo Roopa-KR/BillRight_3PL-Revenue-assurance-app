@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block content %}
+<h1>Period close · {{ c.period.label if c.period else '—' }}</h1><p class="sub">Each step is a check the app runs. Close is enabled only when every check passes or is acknowledged by a controller with a reason.</p>
+{% for ch in checks %}<div class="check">{% if ch.passed %}<span class="status ok">✓ Passed</span>{% elif ch.acknowledged %}<span class="status warn">✓ Acknowledged</span>{% else %}<span class="status bad">✗ Failed</span>{% endif %}
+<div style="flex:1"><strong>{{ ch.no }}. {{ ch.title }}</strong><div class="small">{{ ch.detail }}</div>{% for i in ch.items %}<div class="small">• {{ i }}</div>{% endfor %}
+{% if ch.no == 3 and not ch.passed %}<div class="small"><a href="/data?tab=unresolved">Unresolved customer queue →</a></div>{% endif %}
+{% if ch.no == 5 and not ch.passed %}<div class="small"><a href="/leakage?status=new">Open items →</a> · <a href="/data?tab=cannot">Cannot-rate queue →</a></div>{% endif %}
+{% if ch.no == 4 and not ch.passed %}<div class="small"><a href="/costs#exceptions">Pool exceptions →</a></div>{% endif %}
+{% if ch.acknowledged %}<div class="small muted">Acknowledged by {{ users.get(ch.acknowledged.by) }} {{ ch.acknowledged.at|date }}: {{ ch.acknowledged.reason }}</div>{% endif %}
+{% if ch.can_acknowledge and not ch.acknowledged and c.cur.can('close.acknowledge') and c.period.status != 'closed' %}<form method="post" class="filters" style="margin-top:6px">{{ ui.csrf() }}<input type="hidden" name="action" value="acknowledge"><input type="hidden" name="check" value="{{ ch.no }}"><input type="text" name="reason" placeholder="Reason" required aria-label="Acknowledgement reason"><button class="btn sec">Acknowledge</button></form>{% endif %}
+</div></div>{% endfor %}
+{% if c.period %}<div class="card" style="margin-top:16px">
+{% if c.period.status == 'closed' %}<p>{{ ui.status('closed') }} Closed {{ c.period.closed_at|date }} by {{ users.get(c.period.closed_by) }} · close run #{{ c.period.close_run_id }} · version {{ c.period.close_version }}</p>
+ <form method="post" class="inline">{{ ui.csrf() }}<input type="hidden" name="action" value="verify"><button class="btn sec">Verify: re-run and compare</button></form>
+ {% if c.cur.can('period.reopen') %}<form method="post" style="margin-top:10px">{{ ui.csrf() }}<input type="hidden" name="action" value="reopen"><label for="rr">Reopen (creates a new close version)</label><input id="rr" type="text" name="reason" required placeholder="Reason"><button class="btn danger" style="margin-top:6px">Reopen period</button></form>{% endif %}
+{% else %}{% set ready = checks and (checks|selectattr('ok')|list|length == checks|length) %}
+ <form method="post">{{ ui.csrf() }}<input type="hidden" name="action" value="close"><button class="btn" {{ 'disabled' if not ready or not c.cur.can('period.close') }}>Close {{ c.period.label }}</button></form>
+ {% if not ready %}<p class="small muted">Fix or acknowledge the failed checks first.</p>{% endif %}{% endif %}
+</div>
+{% if verifies %}<h2>Verification runs</h2><ul>{% for v in verifies %}<li>Run #{{ v.id }} · {{ v.finished_at|date }} · {{ v.message }}</li>{% endfor %}</ul>{% endif %}
+<h2>Exports</h2><ul>
+<li><a href="/exports/adjustments">Invoice adjustment file (Excel)</a> · <a href="/exports/adjustments?format=csv">CSV</a></li>
+<li><a href="/exports/leakage_register">Leakage register (Excel)</a></li><li><a href="/exports/reconciliation">Billing reconciliation (Excel)</a></li>
+<li><a href="/exports/customer_pnl">Customer P&amp;L (Excel)</a> · <a href="/exports/customer_pnl?format=pdf">PDF</a></li><li><a href="/exports/expense_allocation">Expense and allocation statement (Excel)</a></li>
+<li><a href="/exports/close_report?format=pdf">Period close report (PDF)</a> · <a href="/exports/receivables_payables">Receivables and payables (Excel)</a></li><li><a href="/exports/pilot_results">Pilot results report (Excel)</a></li></ul>{% endif %}
+{% endblock %}

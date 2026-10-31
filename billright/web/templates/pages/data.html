@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% block content %}
+<h1>Data</h1><p class="sub">Imports, freshness, unresolved customers and the cannot-rate queue.</p>
+<nav class="tabs"><a href="?tab=imports" class="{{ 'on' if tab=='imports' }}">Import centre</a><a href="?tab=freshness" class="{{ 'on' if tab=='freshness' }}">Source freshness</a>
+<a href="?tab=unresolved" class="{{ 'on' if tab=='unresolved' }}">Unresolved customers ({{ d.unresolved_count|qty }})</a><a href="?tab=cannot" class="{{ 'on' if tab=='cannot' }}">Cannot rate ({{ d.cannot_count|qty }})</a></nav>
+{% if tab == 'imports' %}
+{% if c.cur.can('data.import') %}<div class="card"><h3>Upload a file</h3><form method="post" action="/data/import" enctype="multipart/form-data">{{ ui.csrf() }}
+<div class="grid2"><div><label for="st">Source</label><select id="st" name="source_type">{% for k, st in sources.items() %}<option value="{{ k }}">{{ st.label }}</option>{% endfor %}</select></div>
+<div><label for="f">File (CSV, CSV.GZ or XLSX)</label><input id="f" type="file" name="file" required accept=".csv,.gz,.xlsx"></div>
+<div><label for="sk">Replaces earlier file with scope (optional)</label><input id="sk" type="text" name="scope_key" placeholder="default: periods in the file / file name"></div>
+<div><label for="mp">Column mapping (optional JSON: canonical → file column; saved per source)</label><input id="mp" type="text" name="mapping" placeholder='{"INVOICE_NUMBER": "Inv No"}'></div></div>
+<p><button class="btn">Import</button></p></form>
+<details><summary>Expected columns per source</summary>{% for k, st in sources.items() %}<p class="small"><strong>{{ st.label }}</strong>: {% for f in st.fields %}{{ f.name }}{{ '*' if f.required }}{{ ', ' if not loop.last }}{% endfor %}{% if st.description %}<br><span class="muted">{{ st.description }}</span>{% endif %}</p>{% endfor %}<p class="small">* required</p></details></div>{% endif %}
+<h2>Recent imports</h2><div class="tablewrap"><table><thead><tr><th>#</th><th>Source</th><th>File</th><th>When</th><th class="n">Rows</th><th class="n">Accepted</th><th class="n">Rejected</th><th>Status</th></tr></thead><tbody>
+{% for b in d.batches %}<tr><td><a href="/data/batch/{{ b.id }}">{{ b.id }}</a></td><td>{{ sources[b.source_type].label if b.source_type in sources else b.source_type }}</td><td class="small">{{ b.file_name }}</td><td class="nowrap">{{ b.created_at|date }}</td><td class="n">{{ b.row_count|qty }}</td><td class="n">{{ b.accepted_count|qty }}</td><td class="n">{{ b.rejected_count|qty }}</td><td>{{ ui.status('superseded_batch' if b.status=='superseded' else ('accepted' if b.status=='accepted' else 'rejected')) }}{% if b.data_label %}<span class="tag">{{ b.data_label }}</span>{% endif %}</td></tr>
+{% else %}<tr><td colspan="8"><div class="empty">Nothing imported yet.</div></td></tr>{% endfor %}</tbody></table></div>
+{% elif tab == 'freshness' %}
+<div class="tablewrap"><table><thead><tr><th>Source</th><th>Last batch</th><th class="n">Active batches</th><th class="n">Rows</th><th>Status</th></tr></thead><tbody>
+{% for f in d.freshness %}<tr><td>{{ f.label }}</td><td>{{ f.last.created_at|date if f.last else '—' }}</td><td class="n">{{ f.active_batches }}</td><td class="n">{{ f.rows|qty }}</td><td>{% if f.status == 'OK' %}<span class="status ok">✓ OK</span>{% elif f.status == 'Missing' %}<span class="status neutral">— Not imported</span>{% else %}<span class="status warn">! {{ f.status }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% elif tab == 'unresolved' %}
+<p class="sub">Records whose 3PL customer could not be resolved through the configured join path. They are excluded from billing and P&amp;L. CLIENTID is never used to guess.</p>
+{% if not d.run %}<div class="empty">No run for this period yet.</div>{% elif not d.unresolved %}<div class="empty">{{ ui.status('reconciled') }} Every record of {{ c.period.label }} maps to a customer.</div>{% else %}
+<div class="tablewrap"><table><thead><tr><th>Source record</th><th>Why</th><th>Chain broke at</th><th class="n">Quantity</th></tr></thead><tbody>
+{% for u in d.unresolved %}<tr><td>{{ u.source_ref }}</td><td>{{ (u.details.resolution or 'no_match')|replace('_',' ') }}</td><td class="small">{{ u.details.broken_at or '—' }}</td><td class="n">{{ u.estimated_quantity|qty }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% else %}
+<p class="sub">Events that could not be priced, with the fix.</p>
+{% if not d.run %}<div class="empty">No run for this period yet.</div>{% elif not d.cannot %}<div class="empty">{{ ui.status('reconciled') }} Every resolved event of {{ c.period.label }} was rated.</div>{% else %}
+<div class="tablewrap"><table><thead><tr><th>Source record</th><th>Customer</th><th>Charge</th><th>Reason</th><th>Fix</th><th class="n">Quantity</th></tr></thead><tbody>
+{% for u in d.cannot %}<tr><td>{{ u.source_ref }}</td><td>{{ cmap[u.customer_id].code if u.customer_id in cmap else '—' }}</td><td>{{ chmap[u.charge_code_id].code if u.charge_code_id in chmap else (u.details.charge_code or '—') }}</td><td>{{ u.reason|replace('_',' ') }}</td><td class="small">{{ u.details.fix or '' }}</td><td class="n">{{ u.estimated_quantity|qty }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% endif %}{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block content %}
+<h1>Leakage review</h1><p class="sub">Every gap between what the contract allows and what was invoiced, waiting for a recorded decision.</p>
+<form class="filters" method="get">
+ <div><label for="f-c">Customer</label><select id="f-c" name="customer"><option value="">All</option>{% for id, cu in customers.items() %}<option value="{{ id }}" {{ 'selected' if f.customer == id|string }}>{{ cu.code }}</option>{% endfor %}</select></div>
+ <div><label for="f-r">Rule</label><select id="f-r" name="rule"><option value="">All</option>{% for k, v in rule_names.items() %}<option value="{{ k }}" {{ 'selected' if f.rule == k }}>{{ v }} ({{ k }})</option>{% endfor %}</select></div>
+ <div><label for="f-s">Status</label><select id="f-s" name="status"><option value="">All</option>{% for k, v in statuses.items() %}<option value="{{ k }}" {{ 'selected' if f.status == k }}>{{ v }}</option>{% endfor %}</select></div>
+ <div><label for="f-d">Direction</label><select id="f-d" name="direction"><option value="">Both</option><option value="under" {{ 'selected' if f.direction=='under' }}>Billed too little</option><option value="over" {{ 'selected' if f.direction=='over' }}>Billed too much</option></select></div>
+ <div><label for="f-a">Amount above ($)</label><input id="f-a" type="number" step="0.01" name="amount_above" value="{{ f.amount_above or '' }}"></div>
+ <div><button class="btn sec">Filter</button> <a href="/leakage" class="small">Clear</a></div>
+ <div style="margin-left:auto"><a class="btn sec" href="/exports/leakage_register">Export leakage register (Excel)</a></div>
+</form>
+{{ ui.chart(chart) }}
+{% if not c.hdr.run %}<div class="empty">No run for {{ c.period.label if c.period else 'this period' }} yet. <a href="/data">Import data →</a></div>
+{% elif not rows %}<div class="empty">No leakage items match the filter.</div>
+{% else %}
+<form method="post" action="/leakage/assign">{{ ui.csrf() }}
+<div class="tablewrap"><table><thead><tr>{% if c.cur.can('leakage.update') %}<th><span class="sr">Select</span></th>{% endif %}<th>Customer</th><th>Charge</th><th>What happened</th>
+<th class="n">Billable {{ ui.info('billable') }}</th><th class="n">Billed {{ ui.info('billed') }}</th><th class="n">Gap {{ ui.info('gap') }}</th><th>Status</th><th class="n">Age</th><th>Owner</th></tr></thead><tbody>
+{% for r in rows %}<tr>{% if c.cur.can('leakage.update') %}<td><input type="checkbox" name="item" value="{{ r.id }}" aria-label="Select item {{ r.id }}"></td>{% endif %}
+<td class="nowrap">{{ r.customer_code }}</td><td class="nowrap">{{ r.charge }}</td>
+<td><a href="/leakage/{{ r.id }}">{{ r.what }}</a> <span class="tag">{{ r.rule }}</span>{% if r.carried %}<span class="tag">carried from {{ r.period }}</span>{% endif %} {{ ui.dir(r.direction) }}</td>
+<td class="n">{{ r.billable|money }}</td><td class="n">{{ r.billed|money }}</td><td class="n">{{ r.gap|money }}</td><td>{{ ui.status(r.status) }}{% if r.decision %}<div class="small">{{ r.decision_label }}</div>{% endif %}</td>
+<td class="n">{{ r.age_days }} d</td><td>{{ r.owner or '—' }}</td></tr>{% endfor %}</tbody>
+<tfoot><tr>{% if c.cur.can('leakage.update') %}<td></td>{% endif %}<td colspan="3">{{ rows|length }} item(s)</td><td class="n">{{ rows|sum(attribute='billable')|money }}</td><td class="n">{{ rows|sum(attribute='billed')|money }}</td><td class="n">{{ rows|sum(attribute='gap')|money }}</td><td colspan="3"></td></tr></tfoot></table></div>
+{% if c.cur.can('leakage.update') %}<div class="filters" style="margin-top:10px"><div><label for="owner">Assign selected to</label><select id="owner" name="owner">{% for u in users %}<option value="{{ u.id }}">{{ u.name }}</option>{% endfor %}</select></div><div><button class="btn sec">Assign</button></div></div>{% endif %}
+</form>{% endif %}
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block content %}
+<h1>Alerts</h1><p class="sub">Daily leakage alerts and contract drift warnings.</p>
+<form method="post">{{ ui.csrf() }}<button class="btn sec">Mark all as read</button></form>
+<div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>When</th><th>Type</th><th>Message</th><th></th></tr></thead><tbody>
+{% for a in rows %}<tr><td class="nowrap">{{ a.created_at|date }}</td><td>{{ a.kind|replace('_',' ') }}</td><td>{% if not a.read_at %}<strong>{{ a.message }}</strong>{% else %}{{ a.message }}{% endif %}</td><td>{% if a.link %}<a href="{{ a.link }}">Open</a>{% endif %}</td></tr>
+{% else %}<tr><td colspan="4"><div class="empty">No alerts.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

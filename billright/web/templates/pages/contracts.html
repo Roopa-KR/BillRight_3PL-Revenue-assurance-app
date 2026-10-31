@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<h1>Contracts and rates</h1><p class="sub">Customer → contract → rate-card versions. Every version needs a controller who is not its author to approve it.</p>
+<div class="tablewrap"><table><thead><tr><th>Customer</th><th>Contract</th><th>Dates</th><th>Rate-card versions</th><th></th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ r.customer.code }} · {{ r.customer.name }}</td><td>{{ r.contract.reference }}{% if r.contract.document_ref %}<div class="small muted">{{ r.contract.document_ref }}</div>{% endif %}</td>
+<td class="nowrap">{{ r.contract.start_date|date }} – {{ r.contract.end_date|date if r.contract.end_date else 'open' }}</td>
+<td>{% for v in r.versions %}<div><a href="/contracts/version/{{ v.id }}">v{{ v.version_no }}</a> {{ ui.status(v.status) }} <span class="small muted">{{ ('from ' ~ (v.effective_from|date)) if v.effective_from }}{{ (' · superseded from ' ~ (v.superseded_from|date)) if v.superseded_from }}</span></div>{% endfor %}</td>
+<td>{% if c.cur.can('rate.propose') %}<form method="post" action="/contracts/{{ r.contract.id }}/draft">{{ ui.csrf() }}<input type="text" name="reason" placeholder="Change reason" required aria-label="Change reason"><button class="btn sec" style="margin-top:4px">New version</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="5"><div class="empty">No contracts yet.{% if c.cur.can('data.import') %} Import a rate card on the <a href="/data">Data</a> page or add a contract below.{% endif %}</div></td></tr>{% endfor %}</tbody></table></div>
+{% if c.cur.can('rate.propose') %}<details class="card" style="margin-top:12px"><summary>Add a contract</summary><form method="post" action="/contracts/new">{{ ui.csrf() }}
+<label for="cu">Customer</label><select id="cu" name="customer">{% for cu in custs %}<option value="{{ cu.id }}">{{ cu.code }} · {{ cu.name }}</option>{% endfor %}</select>
+<label for="ref">Contract reference</label><input id="ref" type="text" name="reference" required><div class="grid2"><div><label for="sd">Start date</label><input id="sd" type="date" name="start_date" required></div><div><label for="ed">End date</label><input id="ed" type="date" name="end_date"></div></div>
+<label for="doc">Document reference</label><input id="doc" type="text" name="document_ref"><button class="btn" style="margin-top:8px">Add contract</button></form></details>{% endif %}
+{% endblock %}

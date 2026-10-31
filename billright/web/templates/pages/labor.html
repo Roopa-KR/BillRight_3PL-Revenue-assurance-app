@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}
+<p class="small"><a href="/costs">← Costs</a></p><h1>Labor attribution</h1><p class="sub">{{ c.period.label }} · basis: {{ d.basis or 'Not set (setting labor.cost_basis)' }}. Worker-level: finance controller only.</p>
+<div class="kpis"><div class="kpi"><div class="v">{{ d.coverage|ratio_pct }}</div><div class="l">Labor attribution coverage {{ ui.info('coverage') }}</div></div>
+<div class="kpi"><div class="v">{{ d.attributed|money0 }}</div><div class="l">Attributed to customers</div></div><div class="kpi"><div class="v">{{ d.unassigned|money0 }}</div><div class="l">Unassigned (not spread)</div></div></div>
+{% for e in d.errors %}<div class="flash error">{{ e.worker_id }}: {{ e.error }}</div>{% endfor %}
+<div class="tablewrap"><table><thead><tr><th>Worker</th><th>Customer</th><th class="n">Hours</th><th class="n">Loaded rate</th><th class="n">Cost</th><th>Basis</th><th>Unassigned reason</th></tr></thead><tbody>
+{% for r in d.rows %}<tr><td>{{ r.worker }}</td><td>{{ r.customer or 'Unassigned' }}</td><td class="n">{{ r.hours|qty }}</td><td class="n">{{ r.rate|money }}</td><td class="n">{{ r.cost|money }}</td><td>{{ r.basis }}{% if r.basis == 'proxy' %} <span class="tag">Proxy: completed-line share</span>{% endif %}</td><td>{{ (r.reason or '')|replace('_',' ') }}</td></tr>{% endfor %}</tbody>
+<tfoot><tr><td colspan="4">Total</td><td class="n">{{ d.total|money }}</td><td colspan="2"></td></tr></tfoot></table></div>
+{% endblock %}

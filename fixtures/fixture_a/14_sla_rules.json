@@ -1,0 +1,134 @@
+[
+ {
+  "customer_id": "cust-CUST-01",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-01-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-02",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 50,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-02-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-03",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-03-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-04",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-04-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-05",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-05-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-06",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-06-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-07",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-07-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-08",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-08-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-09",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-09-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-10",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 50,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-10-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-11",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-11-2026 (synthetic)"
+ },
+ {
+  "customer_id": "cust-CUST-12",
+  "milestone": "staged_by_carrier_cutoff",
+  "allowed_late_seconds": 0,
+  "penalty_amount": 25,
+  "penalty_basis": "per_order",
+  "cap_amount": 2000,
+  "valid_from": "2026-01-01",
+  "valid_to": null,
+  "contract_reference": "MSA-12-2026 (synthetic)"
+ }
+]

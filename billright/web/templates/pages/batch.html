@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}
+<p class="small"><a href="/data">← Data</a></p><h1>Import #{{ b.id }} · {{ b.file_name }}</h1>
+<p class="sub">{{ b.source_type }} · {{ b.created_at|date }} · by {{ users.get(b.created_by, 'system') }} · scope “{{ b.scope_key }}” · SHA-256 {{ b.file_hash[:16] }}…</p>
+<div class="{{ 'flash ok' if b.status == 'accepted' and not b.rejected_count else 'flash error' }}" role="status"><strong>{{ b.report.summary }}</strong></div>
+<ul>{% for k, v in b.report.items() if k not in ('summary','top_reasons','accepted','rejected') %}<li>{{ k|replace('_',' ')|capitalize }}: {{ v }}</li>{% endfor %}{% if b.superseded_by %}<li>Superseded by import #{{ b.superseded_by }}</li>{% endif %}</ul>
+{% if b.report.top_reasons %}<h2>Rejected rows by reason</h2><table><thead><tr><th>Reason</th><th class="n">Rows</th></tr></thead><tbody>{% for r in b.report.top_reasons %}<tr><td>{{ r.reason }}</td><td class="n">{{ r.rows|qty }}</td></tr>{% endfor %}</tbody></table>
+<p><a class="btn sec" href="?download=1">Download rejected rows (CSV)</a></p>
+<h2>First rejected rows</h2><div class="tablewrap"><table><thead><tr><th class="n">Row</th><th>Reason</th></tr></thead><tbody>{% for r in rej %}<tr><td class="n">{{ r.row_no }}</td><td>{{ r.reason }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% endblock %}

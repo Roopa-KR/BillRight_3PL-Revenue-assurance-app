@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block content %}
+<h1>Customers</h1><p class="sub">Revenue, cost, site profit and margin by customer for {{ c.period.label if c.period else '—' }}.</p>
+{% if not pnl.available %}<div class="empty">{{ pnl.reason }} {% if c.cur.can('run.start') %}Use “Run period” above.{% endif %}</div>{% else %}
+{% set p = pprev.site if pprev and pprev.available else None %}
+<div class="kpis">
+{{ ui.kpi(pnl.site.revenue|money0, 'Revenue', 'revenue', '#table', pnl.site.revenue, p.revenue if p else None) }}
+{{ ui.kpi(pnl.site.total_cost|money0, 'Total cost', 'total_cost', '#table', pnl.site.total_cost, p.total_cost if p else None) }}
+{{ ui.kpi(pnl.site.site_profit|money0, 'Site profit', 'site_profit', '#table', pnl.site.site_profit, p.site_profit if p else None) }}
+{{ ui.kpi(pnl.site.margin_pct|pct, 'Site margin', 'site_margin', '#table', pnl.site.margin_pct, p.margin_pct if p else None, 'pts') }}
+</div>
+{% if pnl.cost_note %}<div class="flash error" role="status">{{ pnl.cost_note }} <a href="/data">Import expenses →</a></div>{% endif %}
+{% if pnl.site.scoped %}<p class="small muted">Totals cover only the customers you are assigned to; unassigned site cost is not shown.</p>{% endif %}
+{{ ui.chart(chart) }}
+<p><a class="btn sec" href="/exports/customer_pnl">Customer P&amp;L (Excel)</a> <a class="btn sec" href="/exports/customer_pnl?format=pdf">Printable PDF</a></p>
+<div class="tablewrap" id="table"><table><thead><tr><th>Customer</th><th class="n">Revenue {{ ui.info('revenue') }}</th><th class="n">Direct cost {{ ui.info('direct') }}</th><th class="n">Allocated shared cost {{ ui.info('shared') }}</th>
+<th class="n">Total cost {{ ui.info('total_cost') }}</th><th class="n">Site profit {{ ui.info('site_profit') }}</th><th class="n">Margin {{ ui.info('margin') }}</th><th class="n">Cost per order {{ ui.info('cpo') }}</th><th class="n">Confirmed, not yet invoiced {{ ui.info('cni') }}</th></tr></thead><tbody>
+{% for r in pnl.rows %}<tr><td><a href="/customers/{{ r.customer_id }}">{{ r.customer }} · {{ r.customer_name }}</a></td><td class="n">{{ r.revenue|money }}</td><td class="n">{{ r.direct_cost|money }}</td><td class="n">{{ r.shared_cost|money }}</td>
+<td class="n">{{ r.total_cost|money }}</td><td class="n">{{ r.site_profit|money }}</td><td class="n">{{ r.margin_pct|pct }}</td><td class="n">{{ r.cost_per_order|money if r.cost_per_order is not none else 'Not available' }}</td><td class="n">{{ r.confirmed_not_invoiced|money }}</td></tr>{% endfor %}</tbody>
+<tfoot>{% if not pnl.site.scoped and pnl.costs_available %}<tr><td>Unassigned cost {{ ui.info('unassigned') }}</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">{{ pnl.site.unassigned_cost|money }}</td><td class="n">{{ (0 - pnl.site.unassigned_cost)|money }}</td><td colspan="3"></td></tr>{% endif %}
+<tr><td>{{ 'Site total' if not pnl.site.scoped else 'Total (your customers)' }}</td><td class="n">{{ pnl.site.revenue|money }}</td><td class="n">{{ (pnl.rows|sum(attribute='direct_cost'))|money if pnl.costs_available else 'Not available' }}</td><td class="n">{{ (pnl.rows|sum(attribute='shared_cost'))|money if pnl.costs_available else 'Not available' }}</td>
+<td class="n">{{ pnl.site.total_cost|money }}</td><td class="n">{{ pnl.site.site_profit|money }}</td><td class="n">{{ pnl.site.margin_pct|pct }}</td><td></td><td class="n">{{ pnl.rows|sum(attribute='confirmed_not_invoiced')|money }}</td></tr>
+{% if pnl.site.profit_before_financing_tax is not none %}<tr><td>Unallocated central overhead</td><td colspan="4"></td><td class="n">{{ (0 - pnl.site.central_overhead)|money }}</td><td colspan="3"></td></tr>
+<tr><td>Profit before financing and tax</td><td colspan="4"></td><td class="n">{{ pnl.site.profit_before_financing_tax|money }}</td><td colspan="3"></td></tr>{% endif %}
+</tfoot></table></div>
+{% if c.cur.can('cost.enter') and c.period.status != 'closed' %}<details class="card" style="margin-top:12px"><summary>Enter unallocated central overhead</summary><form method="post" action="/costs/overhead">{{ ui.csrf() }}
+<label for="oh">Amount (USD)</label><input id="oh" type="number" step="0.01" min="0" name="amount" required><label for="ohn">Note</label><input id="ohn" type="text" name="note"><button class="btn sec" style="margin-top:8px">Save</button></form></details>{% endif %}
+{% endif %}{% endblock %}

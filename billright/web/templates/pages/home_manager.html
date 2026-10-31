@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block content %}
+<h1>Customer margins</h1><p class="sub">{{ c.period.label }} · lowest margin first.</p>
+{% if not pnl.available %}<div class="empty">{{ pnl.reason }}</div>{% else %}
+<div class="kpis">
+{{ ui.kpi(pnl.site.revenue|money0, 'Revenue', 'revenue', '/customers', pnl.site.revenue, pprev.site.revenue if pprev and pprev.available else None) }}
+{{ ui.kpi(pnl.site.margin_pct|pct, 'Site margin' if not pnl.site.scoped else 'Margin (your customers)', 'site_margin', '/customers', pnl.site.margin_pct, pprev.site.margin_pct if pprev and pprev.available else None, 'pts') }}
+{{ ui.kpi(below if below is not none else 'Not set', 'Customers below margin target', 'below_target', '/customers', None, None, 'count') }}
+</div>
+<div class="tablewrap"><table><thead><tr><th>Customer</th><th class="n">Revenue</th><th class="n">Total cost</th><th class="n">Site profit</th><th class="n">Margin {{ ui.info('margin') }}</th><th class="n">Target</th></tr></thead><tbody>
+{% for r in pnl.rows %}<tr><td><a href="/customers/{{ r.customer_id }}">{{ r.customer }} · {{ r.customer_name }}</a></td><td class="n">{{ r.revenue|money }}</td><td class="n">{{ r.total_cost|money }}</td><td class="n">{{ r.site_profit|money }}</td><td class="n">{{ r.margin_pct|pct }}</td><td class="n">{{ (r.target|string ~ '%') if r.target is not none else 'Not set' }}</td></tr>{% endfor %}
+</tbody></table></div>{% endif %}
+{% endblock %}

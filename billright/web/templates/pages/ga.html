@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block content %}
+<h1>GA tools</h1><p class="sub">Storage billing, daily alerts, surcharges, minimums and tiers, contract drift, SLA penalties and accounting export for {{ c.period.label if c.period else '—' }}.</p>
+<div class="grid2">
+<div class="card"><h3>G3 Daily leakage alerts</h3><p class="small">Rates every open period and alerts billing analysts of new items before invoicing. Schedule: setting <code>alerts.daily_run_hour</code> with the <code>billright scheduler</code> process.</p>
+{% if c.cur.can('run.start') %}<form method="post" action="/ga/alerts/run">{{ ui.csrf() }}<button class="btn sec">Run the daily check now</button></form>{% endif %}</div>
+<div class="card"><h3>G1 Storage from daily snapshots</h3>{% if data.storage and data.storage.available %}<p class="small">Policy {{ data.storage.policy|tojson }} · {{ data.storage.snapshots|qty }} snapshot rows</p>
+<table><thead><tr><th>Customer</th><th class="n">Quantity</th></tr></thead><tbody>{% for k, v in data.storage.rows %}<tr><td>{{ k }}</td><td class="n">{{ v|qty }}</td></tr>{% endfor %}</tbody></table>
+{% if c.cur.can('data.import') %}<form method="post" action="/ga/storage/generate" style="margin-top:8px">{{ ui.csrf() }}<button class="btn sec">Create storage quantities for billing</button></form>{% endif %}
+{% else %}<p class="muted small">{{ data.storage.reason if data.storage else 'No period.' }}</p>{% endif %}</div>
+</div>
+{% if data.minimums is defined %}<h2>G5 Minimums and tiers</h2>{% if not data.minimums %}<div class="empty">No rate with a minimum or tiers was used in this period.</div>{% else %}
+<table><thead><tr><th>Customer</th><th>Charge</th><th>Check</th><th>Contract</th><th class="n">Billable</th><th class="n">Billed</th><th>Result</th></tr></thead><tbody>
+{% for r in data.minimums %}<tr><td>{{ r.customer }}</td><td>{{ r.charge }}</td><td>{{ r.check }}</td><td class="small">{{ r.expected }}</td><td class="n">{{ r.billable|money }}</td><td class="n">{{ r.billed|money }}</td><td>{{ ui.status('reconciled' if r.ok else 'gap') }}</td></tr>{% endfor %}</tbody></table>{% endif %}{% endif %}
+{% if data.drift is defined %}<h2>G6 Contract drift</h2>{% if not data.drift %}<div class="empty">No drift found.</div>{% else %}<ul>{% for d in data.drift %}<li><span class="tag">{{ d.kind|replace('_',' ') }}</span> {{ d.customer }}: {{ d.message }} <a href="{{ d.link }}">Open</a></li>{% endfor %}</ul>{% endif %}
+<form method="post" action="/ga/drift/run">{{ ui.csrf() }}<button class="btn sec">Raise drift warnings as alerts</button></form>{% endif %}
+{% if data.sla is defined %}<h2>G7 SLA penalties: exposure vs booked</h2>{% if not data.sla.available %}<div class="empty">{{ data.sla.reason }}</div>{% else %}
+<table><thead><tr><th>Customer</th><th>Milestone</th><th class="n">Late orders</th><th class="n">Penalty</th><th>Basis</th><th class="n">Cap</th><th class="n">Exposure</th><th class="n">Booked</th><th class="n">Difference</th></tr></thead><tbody>
+{% for r in data.sla.rows %}<tr><td>{{ r.customer }}</td><td>{{ r.milestone|replace('_',' ') }}</td><td class="n">{{ r.late_orders }}</td><td class="n">{{ r.penalty|money }}</td><td>{{ r.basis|replace('_',' ') }}</td><td class="n">{{ r.cap|money }}</td><td class="n">{{ r.exposure|money }}</td><td class="n">{{ r.booked|money }}</td><td class="n">{{ r.difference|money }}</td></tr>{% endfor %}</tbody>
+<tfoot><tr><td colspan="6">Total</td><td class="n">{{ data.sla.total_exposure|money }}</td><td class="n">{{ data.sla.total_booked|money }}</td><td class="n">{{ (data.sla.total_exposure - data.sla.total_booked)|money }}</td></tr></tfoot></table>{% endif %}{% endif %}
+<h2>G4 Surcharge rules</h2>{% if not data.surcharges %}<p class="muted">No surcharge rules.</p>{% else %}<table><thead><tr><th>Name</th><th>Kind</th><th>Event</th><th>Parameters</th><th>Status</th><th></th></tr></thead><tbody>
+{% for r in data.surcharges %}<tr><td>{{ r.name }}</td><td>{{ r.kind }}</td><td>{{ r.applies_to_event_type }}</td><td class="small"><code>{{ r.parameters|tojson }}</code></td><td>{{ ui.status('approved' if r.status=='approved' else 'draft') }}</td>
+<td>{% if r.status=='draft' and c.cur.can('rate.approve') %}<form method="post" action="/ga/surcharge">{{ ui.csrf() }}<input type="hidden" name="action" value="approve"><input type="hidden" name="rule_id" value="{{ r.id }}"><button class="btn sec">Approve</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>{% endif %}
+<p class="small">A surcharge rule marks qualifying events with <code>surcharge:&lt;CHARGE&gt;</code>; the surcharge rate prices them with the condition <code>{"surcharge:&lt;CHARGE&gt;": true}</code>.</p>
+{% if c.cur.can('accounting.export') %}<h2>G8 Accounting export</h2><form method="post" action="/ga/accounting">{{ ui.csrf() }}<button class="btn sec">Push approved adjustments and credits</button></form>
+<ul>{% for e in data.exports %}<li>#{{ e.id }} · {{ e.created_at|date }} · {{ e.adapter }} · {{ e.item_ids|length }} item(s) · <a href="/ga/accounting/{{ e.id }}">{{ e.file_name }}</a></li>{% endfor %}</ul>{% endif %}
+{% endblock %}

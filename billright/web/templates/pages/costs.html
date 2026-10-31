@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% block content %}
+<h1>Costs and allocation</h1><p class="sub">What the site spent in {{ c.period.label }}, who was paid, and how each pool was assigned to customers.</p>
+<div class="kpis">
+{{ ui.kpi(d.total|money0, 'Total operating cost', 'opcost', '#who', d.total, dprev.total if dprev else None) }}
+{{ ui.kpi(d.allocated|money0, 'Allocated to customers', 'allocated', '#matrix', d.allocated, dprev.allocated if dprev else None) }}
+{{ ui.kpi(d.unassigned|money0, 'Unassigned', 'unassigned', '#matrix', d.unassigned, dprev.unassigned if dprev else None) }}
+{{ ui.kpi(d.exceptions|length, 'Pools with exceptions', 'exceptions', '#exceptions', d.exceptions|length, dprev.exceptions|length if dprev else None, 'count') }}
+</div>
+{{ ui.chart(chart) }}
+<p>{% if c.cur.can('view.labor_detail') %}<a class="btn sec" href="/costs/labor">Labor attribution</a> {% endif %}<a class="btn sec" href="/admin/drivers">Allocation drivers</a> <a class="btn sec" href="/exports/expense_allocation">Expense and allocation statement (Excel)</a></p>
+<h2 id="who">Who gets paid</h2>
+<div class="tablewrap"><table><thead><tr><th>Payment recipient</th><th class="n">Amount</th><th>Treatment</th></tr></thead><tbody>
+{% for w in d.who %}<tr><td>{{ w.label }}</td><td class="n">{{ w.amount|money }}</td><td>{{ w.treatment }}</td></tr>{% endfor %}</tbody>
+<tfoot><tr><td>Total</td><td class="n">{{ d.recipients_total|money }}</td><td>{% if d.ledger_reconciles %}{{ ui.status('reconciled') }} Matches the expense ledger ✓{% else %}<span class="status bad">✗ Does not match the expense ledger ({{ d.difference|money }})</span>{% endif %}</td></tr></tfoot></table></div>
+{% if d.exceptions %}<h2 id="exceptions">Pools with exceptions</h2>{% for e in d.exceptions %}<div class="panel" style="border-color:#B4483B"><strong>{{ e.label }}: {{ e.exception_label }}</strong>
+<h4>What is happening</h4><p>{{ e.amount|money }} stays unassigned; it is not split across customers.</p><h4>What to check</h4><p>{% if e.exception == 'no_approved_driver' %}Define and approve a driver for this category{% elif e.exception == 'zero_driver_quantity' %}Import or enter driver quantities for {{ c.period.label }}{% else %}Review the driver set-up{% endif %}. <a href="{{ e.fix }}">Fix →</a></p></div>{% endfor %}{% endif %}
+<h2 id="matrix">Allocation matrix</h2>
+{% if not d.matrix %}<div class="empty">No allocation for this period yet. {% if not d.run %}Run the period first.{% endif %}</div>{% else %}
+<div class="tablewrap"><table><thead><tr><th>Expense category</th><th>Method</th>{% for cu in d.customers %}<th class="n">{{ cu.code }}</th>{% endfor %}<th class="n">Unassigned</th><th class="n">Pool total</th><th>Check</th></tr></thead><tbody>
+{% for r in d.matrix %}<tr><td><a href="/costs/cell?category={{ r.category }}">{{ r.label }}</a></td><td class="small">{{ r.method }}{% if r.proxy %} <span class="tag">Proxy</span>{% endif %}</td>{% for cu in d.customers %}<td class="n">{{ r.cells[cu.id]|money }}</td>{% endfor %}
+<td class="n">{{ r.unassigned|money }}</td><td class="n">{{ r.pool|money }}</td><td>{% if r.check %}<span class="status ok">✓ Reconciled</span>{% else %}<span class="status bad">✗ Off</span>{% endif %}</td></tr>{% endfor %}</tbody>
+<tfoot><tr><td colspan="2">Total</td>{% for cu in d.customers %}<td class="n">{{ d.matrix|map(attribute='cells')|map(attribute=cu.id)|sum|money }}</td>{% endfor %}<td class="n">{{ d.unassigned|money }}</td><td class="n">{{ d.total|money }}</td><td></td></tr></tfoot></table></div>{% endif %}
+{% endblock %}

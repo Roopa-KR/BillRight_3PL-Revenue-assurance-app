@@ -1,0 +1,13 @@
+CUSTOMER_CODE,CUSTOMER_NAME,SEGMENT,ACTIVE,SOURCE_SYSTEM
+CUST-01,Harbor Pharmacy Group (fictional),retail_pharmacy_chain,true,GiNi M140 (synthetic)
+CUST-02,Valley Health System (fictional),hospital_network,true,GiNi M140 (synthetic)
+CUST-03,Sunrise Long-Term Care (fictional),long_term_care,true,GiNi M140 (synthetic)
+CUST-04,Coastline Clinics (fictional),clinic_group,true,GiNi M140 (synthetic)
+CUST-05,Meridian Drug Stores (fictional),retail_pharmacy_chain,true,GiNi M140 (synthetic)
+CUST-06,Pinewood Independent Pharmacy Co-op (fictional),independent_pharmacy,true,GiNi M140 (synthetic)
+CUST-07,Bayview Specialty Rx (fictional),specialty_pharmacy,true,GiNi M140 (synthetic)
+CUST-08,Northgate Urgent Care (fictional),clinic_group,true,GiNi M140 (synthetic)
+CUST-09,Redwood Veterinary Supply (fictional),veterinary,true,GiNi M140 (synthetic)
+CUST-10,Summit Home Infusion (fictional),home_infusion,true,GiNi M140 (synthetic)
+CUST-11,Cedar Correctional Health (fictional),institutional,true,GiNi M140 (synthetic)
+CUST-12,Lakeshore Mail-Order Rx (fictional),mail_order,true,GiNi M140 (synthetic)

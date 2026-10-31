@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    environment: {POSTGRES_USER: billright, POSTGRES_PASSWORD: billright, POSTGRES_DB: billright}
+    volumes: [pgdata:/var/lib/postgresql/data, ./scripts/init_app_role.sql:/docker-entrypoint-initdb.d/10-app-role.sql:ro]
+  web:
+    build: .
+    env_file: .env
+    depends_on: [db]
+    ports: ["8000:8000"]
+    volumes: [uploads:/data/uploads]
+  scheduler:
+    build: .
+    env_file: .env
+    depends_on: [db]
+    command: ["python", "-m", "billright.cli", "scheduler"]
+volumes: {pgdata: {}, uploads: {}}

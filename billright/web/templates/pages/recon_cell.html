@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<p class="small"><a href="/reconciliation">← Billing reconciliation</a></p>
+<h1>{{ customer.code }} · {{ charge.code }}</h1><p class="sub">{{ c.period.label }} · {{ data.total|qty }} rated event(s){% if data.total > data.events|length %}, first {{ data.events|length }} shown{% endif %}.</p>
+<h2>Invoice lines</h2>{% if not data.invoices %}<div class="empty">No invoice line found.</div>{% else %}
+<table><thead><tr><th>Invoice</th><th class="n">Qty</th><th class="n">Unit price</th><th class="n">Amount</th><th>Posted</th></tr></thead><tbody>
+{% for x in data.invoices %}<tr><td>{{ x.h.invoice_number }}/{{ x.l.line_number }}</td><td class="n">{{ x.l.quantity|qty }}</td><td class="n">{{ x.l.unit_price|qty }}</td><td class="n">{{ x.l.amount|money }}</td><td>{{ x.l.posted_on|date }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+<h2>Rated events</h2><div class="tablewrap"><table><thead><tr><th>Source</th><th>Service date</th><th>Order</th><th>Task</th><th class="n">Qty</th><th class="n">Unit price</th><th class="n">Amount (unrounded)</th></tr></thead><tbody>
+{% for e in data.events %}<tr><td>{{ e.a.source_ref if e.a else ('MANUAL:' ~ e.r.manual_entry_id if e.r.manual_entry_id else 'expense line ' ~ e.r.expense_line_id) }}</td><td>{{ e.r.service_date|date }}</td><td>{{ e.a.order_ref if e.a else '—' }}</td><td>{{ e.a.task_ref if e.a else '—' }}</td>
+<td class="n">{{ e.r.quantity_in_rate_uom|qty }}</td><td class="n">{{ e.r.unit_price|qty }}</td><td class="n">{{ e.r.amount_unrounded|qty }}</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

@@ -1,0 +1,13 @@
+# Runtime
+Flask>=3.1,<4
+SQLAlchemy>=2.0,<2.1
+alembic>=1.13,<2
+psycopg[binary]>=3.2,<4
+openpyxl>=3.1,<4
+reportlab>=4,<6
+PyJWT[crypto]>=2.8,<3
+requests>=2.31,<3
+python-dotenv>=1,<2
+waitress>=3,<4
+# Tests and tooling
+pytest>=8,<10

@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block content %}
+<h1>What needs action today</h1><p class="sub">Open leakage for {{ c.period.label }} and work waiting for you.</p>
+<div class="kpis">
+{{ ui.kpi(k.open_amount|money0 ~ ' · ' ~ k.open_count ~ ' item' ~ ('s' if k.open_count != 1 else ''), 'Open leakage', 'open', '/leakage?status=', k.open_amount, kprev.open_amount if kprev else None) }}
+{{ ui.kpi(k.carried_amount|money0, 'Bill next cycle carried', 'carried', '/leakage', k.carried_amount, kprev.carried_amount if kprev else None) }}
+{{ ui.kpi(k.cannot_rate|qty, 'Cannot-rate items', 'cannot', '/data?tab=cannot', k.cannot_rate, kprev.cannot_rate if kprev else None, 'count') }}
+{{ ui.kpi(k.manual_to_review|qty, 'Manual entries to review', 'manual', '/work', k.manual_to_review, kprev.manual_to_review if kprev else None, 'count') }}
+</div>
+{% if k.open_over_amount %}<p class="small"><span class="status bad">▲ Billed too much</span> {{ k.open_over_amount|money0 }} of open over-billing is also waiting (possible credits).</p>{% endif %}
+<h2>Your next items</h2>
+{% if not k.next_items %}<div class="empty">No open leakage items for {{ c.period.label }}. {% if not c.hdr.run %}<a href="/data">Import data and run the period →</a>{% endif %}</div>
+{% else %}<div class="tablewrap"><table><thead><tr><th>Customer</th><th>What happened</th><th class="n">Amount</th><th class="n">Age</th><th></th></tr></thead><tbody>
+{% for r in k.next_items %}<tr><td class="nowrap">{{ r.customer_code }}</td><td>{{ r.what }} <span class="tag">{{ r.rule }}</span>{% if r.carried %}<span class="tag">carried from {{ r.period }}</span>{% endif %}</td>
+<td class="n">{{ r.gap|money }}</td><td class="n">{{ r.age_days }} d</td><td><a class="btn sec" href="/leakage/{{ r.id }}">Open</a></td></tr>{% endfor %}
+</tbody></table></div>{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<p class="small"><a href="/customers">← Customers</a></p>
+<h1>{{ d.customer.code }} · {{ d.customer.name }}</h1><p class="sub">{{ c.period.label }}{% if d.row %} · revenue {{ d.row.revenue|money0 }} · margin {{ d.row.margin_pct|pct }}{% endif %}</p>
+{% if not d.row %}<div class="empty">No results for this customer in this period.</div>{% else %}
+{% if d.insight and d.insight.applies %}<div class="panel" role="region" aria-label="Why is margin low?"><strong>Why is margin low?</strong>
+<h4>What is happening</h4><p>{{ d.insight.what }}</p><h4>Why</h4><ul>{% for w in d.insight.why %}<li>{{ w }}</li>{% endfor %}</ul><h4>What to check</h4><p>{{ d.insight.check }}</p></div>{% endif %}
+{{ ui.chart(c2) }}
+{{ ui.chart(c3) }}
+<h2>Cost by category</h2>
+<div class="tablewrap"><table><thead><tr><th>Category</th><th>Method</th><th class="n">Share</th><th class="n">Amount</th></tr></thead><tbody>
+{% for x in d.categories %}<tr><td>{{ x.label }}</td><td>{{ x.method }}{% if x.proxy %} <span class="tag">Proxy: completed-line share</span>{% endif %}</td><td class="n">{{ (x.share * 100)|pct if x.share is not none else '100% (direct)' }}</td><td class="n">{{ x.amount|money }}</td></tr>{% endfor %}</tbody>
+<tfoot><tr><td colspan="3">Total cost</td><td class="n">{{ d.row.total_cost|money }}</td></tr></tfoot></table></div>
+{% endif %}{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block content %}
+<h1>Billing reconciliation</h1><p class="sub">Billable vs billed per customer and charge code for {{ c.period.label if c.period else '—' }}. Click a row for the events and invoice lines behind it.</p>
+{% if not data or not data.run %}<div class="empty">No run for this period yet. <a href="/data">Import data →</a></div>{% else %}
+<p><a class="btn sec" href="/exports/reconciliation">Export (Excel)</a></p>
+<div class="tablewrap"><table><thead><tr><th>Customer</th><th>Charge</th><th class="n">Billable qty</th><th class="n">Billed qty</th><th class="n">Billable {{ ui.info('billable') }}</th><th class="n">Billed {{ ui.info('billed') }}</th><th class="n">Gap {{ ui.info('gap') }}</th><th>Status</th></tr></thead><tbody>
+{% for r in data.rows %}<tr><td>{{ r.customer }}</td><td><a href="/reconciliation/cell?customer={{ r.customer_id }}&charge={{ r.charge_id }}">{{ r.charge }}</a></td><td class="n">{{ r.billable_qty|qty }}</td><td class="n">{{ r.billed_qty|qty }}</td>
+<td class="n">{{ r.billable|money }}</td><td class="n">{{ r.billed|money }}</td><td class="n">{{ r.gap|money }}</td><td>{{ ui.status(r.status) }}{% for x in r.rules %}<span class="tag">{{ x }}</span>{% endfor %}{% if r.note %}<div class="small muted">{{ r.note }}</div>{% endif %}</td></tr>
+{% if loop.last or data.rows[loop.index].customer != r.customer %}{% set t = data.by_customer[r.customer] %}<tr><td colspan="4" class="small"><strong>{{ r.customer }} total</strong></td><td class="n"><strong>{{ t.billable|money }}</strong></td><td class="n"><strong>{{ t.billed|money }}</strong></td><td class="n"><strong>{{ t.gap|money }}</strong></td><td></td></tr>{% endif %}
+{% endfor %}</tbody>
+<tfoot><tr><td colspan="4">Site total</td><td class="n">{{ data.totals.billable|money }}</td><td class="n">{{ data.totals.billed|money }}</td><td class="n">{{ data.totals.gap|money }}</td><td></td></tr></tfoot></table></div>
+<h2>Totals by charge code</h2>
+<div class="tablewrap"><table><thead><tr><th>Charge</th><th class="n">Billable</th><th class="n">Billed</th><th class="n">Gap</th></tr></thead><tbody>
+{% for k, t in data.by_charge.items() %}<tr><td>{{ k }}</td><td class="n">{{ t.billable|money }}</td><td class="n">{{ t.billed|money }}</td><td class="n">{{ t.gap|money }}</td></tr>{% endfor %}</tbody>
+<tfoot><tr><td>Total</td><td class="n">{{ data.totals.billable|money }}</td><td class="n">{{ data.totals.billed|money }}</td><td class="n">{{ data.totals.gap|money }}</td></tr></tfoot></table></div>
+{% endif %}{% endblock %}

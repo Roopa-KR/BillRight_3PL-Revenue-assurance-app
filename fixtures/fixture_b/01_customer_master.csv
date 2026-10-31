@@ -1,0 +1,4 @@
+CUSTOMER_CODE,CUSTOMER_NAME,SEGMENT,ACTIVE,SOURCE_SYSTEM
+RETAILCO,RetailCo,illustrative,true,Illustrative M140
+FOODCO,FoodCo,illustrative,true,Illustrative M140
+PARTSCO,PartsCo,illustrative,true,Illustrative M140

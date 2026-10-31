@@ -1,0 +1,60 @@
+{% set DEFS = {
+ 'billable': 'Billable amount: what the contract says should be charged for the work performed in the period.',
+ 'billed': 'Billed amount: what was actually invoiced for that customer, charge code and period.',
+ 'gap': 'Leakage = Billable − Billed. Positive = under-billing; negative = over-billing (a possible credit).',
+ 'open': 'Open leakage: positive gap of items still New or Under review.',
+ 'carried': 'Items decided “Bill next cycle” in earlier periods that are not yet invoiced.',
+ 'cannot': 'Events that could not be priced: no customer, no rate, no unit conversion, an ambiguous rate or a missing quantity. Unknown is not zero.',
+ 'manual': 'Off-system work recorded by supervisors and waiting for a billing analyst’s decision.',
+ 'confirmed': 'Leakage confirmed: positive gap of items decided “Bill now” or “Bill next cycle”.',
+ 'invoiced': 'Leakage invoiced (recovered): confirmed items whose adjustment appears on a later imported invoice line.',
+ 'margin': 'Margin = site operating profit ÷ revenue × 100.',
+ 'site_margin': 'Site margin = site operating profit ÷ site revenue × 100. Site profit = revenue − allocated cost − unassigned cost.',
+ 'approvals': 'Rate-card versions, leakage decisions above the approval threshold and allocation drivers waiting for a controller.',
+ 'revenue': 'Revenue: billed revenue for the period (service consideration earned under contract; not cash collected).',
+ 'total_cost': 'Total cost = direct cost + allocated shared cost.',
+ 'site_profit': 'Site operating profit: revenue less direct and allocated site operating expense.',
+ 'direct': 'Direct cost: cost clearly attributable to one customer or shipment.',
+ 'shared': 'Shared cost: warehouse-wide expense assigned with an approved activity driver.',
+ 'cpo': 'Cost per order = total attributable cost ÷ orders completed (Not available when there are no orders).',
+ 'cni': 'Confirmed, not yet invoiced: confirmed under-billing still to be invoiced. Never added to revenue.',
+ 'below_target': 'Customers whose margin is below their own target (setting per customer). Not set = no targets entered.',
+ 'opcost': 'Total operating cost: all expense lines of the period.',
+ 'allocated': 'Cost assigned to customers: direct attribution plus shared pools split by approved drivers.',
+ 'unassigned': 'Cost that cannot be attributed with an approved driver (or unassigned activity). Never pushed onto customers.',
+ 'exceptions': 'Pools with no approved driver, more than one driver, zero driver quantity or unattributed lines in a direct-only category.',
+ 'coverage': 'Labor attribution coverage = attributed labor cost ÷ total labor cost.'} %}
+
+{% macro info(key) %}<span class="info" tabindex="0" role="note" aria-label="{{ DEFS.get(key, key) }}" data-tip="{{ DEFS.get(key, key) }}">i</span>{% endmacro %}
+
+{% macro delta(cur, prev, kind='money') %}{% if prev is not none and cur is not none %}{% set d = cur - prev %}
+<div class="d">{{ '▲' if d > 0 else ('▼' if d < 0 else '■') }} {% if kind == 'money' %}{{ d|money0 }}{% elif kind == 'pts' %}{{ '%.1f'|format(d|float) }} pts{% else %}{{ d }}{% endif %} vs previous period</div>
+{% else %}<div class="d">No previous period to compare</div>{% endif %}{% endmacro %}
+
+{% macro kpi(value, label, key, href, cur=None, prev=None, kind='money', na=None) %}
+<a class="kpi" href="{{ href }}"><div class="v">{{ value if na is none else na }}</div><div class="l">{{ label }} {{ info(key) }}</div>{{ delta(cur, prev, kind) }}</a>
+{% endmacro %}
+
+{% macro chart(ch) %}
+{% if ch.hidden %}<div class="chart"><div class="muted">{{ ch.reason }}</div></div>
+{% else %}<figure class="chart" style="margin:0 0 16px" aria-label="{{ ch.title }}">
+  <figcaption class="t">{{ ch.title }}</figcaption>{% if ch.key %}<div class="k">{{ ch.key }}</div>{% endif %}
+  <div data-plot='{{ ch.figure|tojson }}' {% if ch.clickable %}data-click="{{ ch.clickable }}"{% endif %} role="img" aria-label="{{ ch.title }}. Use View data for the values."></div>
+  <details><summary>View data</summary><table><thead><tr>{% for h in ch.table.columns %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for r in ch.table.rows %}<tr>{% for v in r %}<td>{{ v }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></details>
+</figure>{% endif %}
+{% endmacro %}
+
+{% macro status(st) %}
+{% set M = {'new':('warn','●','New'),'under_review':('warn','◐','Under review'),'decided':('ok','✓','Decided'),'approved':('ok','✓✓','Approved'),
+ 'resolved_by_data':('neutral','↺','Resolved by data'),'reconciled':('ok','✓','Reconciled'),'gap':('warn','!','Gap'),'rounding':('neutral','≈','Rounding only'),
+ 'cannot_rate':('bad','✗','Cannot rate'),'submitted':('warn','●','Submitted'),'accepted':('ok','✓','Accepted'),'rejected':('bad','✗','Rejected'),
+ 'draft':('neutral','✎','Draft'),'pending_approval':('warn','●','Pending approval'),'superseded':('neutral','↺','Superseded'),
+ 'succeeded':('ok','✓','Succeeded'),'failed':('bad','✗','Failed'),'blocked':('bad','✗','Blocked'),'running':('warn','◐','Running'),
+ 'superseded_batch':('neutral','↺','Superseded'),'open':('ok','○','Open'),'closed':('neutral','🔒','Closed')} %}
+{% set x = M.get(st, ('neutral','·',st)) %}<span class="status {{ x[0] }}"><span aria-hidden="true">{{ x[1] }}</span> {{ x[2] }}</span>
+{% endmacro %}
+
+{% macro dir(d) %}{% if d == 'over' %}<span class="status bad"><span aria-hidden="true">▲</span> Billed too much</span>{% else %}<span class="status warn"><span aria-hidden="true">▼</span> Billed too little</span>{% endif %}{% endmacro %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}

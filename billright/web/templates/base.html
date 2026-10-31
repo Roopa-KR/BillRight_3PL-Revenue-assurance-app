@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}GiNi BillRight{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+<script src="{{ url_for('static', filename='plotly.min.js') }}"></script>
+</head>
+<body>
+{% import "macros.html" as ui with context %}
+<div class="layout">
+<nav class="side" aria-label="Main">
+  <div class="brand">GiNi BillRight<small>{{ c.hdr.site.name }}</small></div>
+  {% for key, label, perm, href in c.nav %}<a href="{{ href }}" class="{{ 'on' if active == key }}" {% if active == key %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+  {% if c.alerts %}<a href="/alerts">Alerts ({{ c.alerts }})</a>{% endif %}
+  <div class="me">{{ c.cur.user.name }}<br>{{ c.cur.role_labels|join(', ') }}
+    <form method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button>Sign out</button></form></div>
+</nav>
+<main>
+<header class="top">
+  <form method="get">
+    {% if c.hdr.sites|length > 1 %}<label for="site" class="sr">Site</label><select id="site" name="site" onchange="this.form.submit()">{% for s in c.hdr.sites %}<option value="{{ s.id }}" {{ 'selected' if s.id == c.site_id }}>{{ s.name }}</option>{% endfor %}</select>
+    {% else %}<strong>{{ c.hdr.site.name }}</strong>{% endif %}
+    <label for="period" style="margin:0">Period</label>
+    <select id="period" name="period" onchange="this.form.submit()">{% for p in c.hdr.periods %}<option value="{{ p.id }}" {{ 'selected' if p.id == c.period_id }}>{{ p.label }}{{ ' (closed)' if p.status == 'closed' }}</option>{% endfor %}</select>
+    {% for k, v in request.args.items() if k not in ('period','site') %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  </form>
+  <span title="{% for k, v in c.hdr.per_source.items() %}{{ k }}: {{ v|date }}&#10;{% endfor %}">Data as of {{ c.hdr.data_as_of|date }}</span>
+  <span>{% if c.hdr.run %}Run #{{ c.hdr.run.id }} · {{ c.hdr.run.finished_at|date }}{% else %}No run yet{% endif %}</span>
+  {% if c.period and c.period.status == 'closed' %}<span class="badge closed">🔒 Closed · frozen</span>{% endif %}
+  {% for l in c.hdr.data_labels %}<span class="badge synth" title="All figures on this site come from {{ l|lower }} data, not real customer records.">⚠ {{ l }} data</span>{% endfor %}
+  {% if c.cur.can('run.start') and c.period and c.period.status != 'closed' %}
+  <form method="post" action="/run" id="runform"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="period" value="{{ c.period_id }}"><button class="btn sec" style="padding:4px 10px">Run period</button></form>{% endif %}
+</header>
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, msg in msgs %}<div class="flash {{ cat }}" role="status">{{ msg }}</div>{% endfor %}{% endwith %}
+{% block content %}{% endblock %}
+</main>
+</div>
+<script>
+document.querySelectorAll('[data-plot]').forEach(function(el){var spec=JSON.parse(el.getAttribute('data-plot'));Plotly.newPlot(el,spec.data,spec.layout,{displaylogo:false,responsive:true,modeBarButtonsToRemove:['lasso2d','select2d']});
+ if(el.dataset.click){el.on('plotly_click',function(ev){var p=ev.points[0];var key=p.customdata&&p.customdata[0];if(key){var u=new URL(location.href);u.searchParams.set(el.dataset.click,key);location.href=u.toString();}});}});
+</script>
+</body></html>

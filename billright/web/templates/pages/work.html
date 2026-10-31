@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% block content %}
+<h1>Work capture</h1><p class="sub">Record off-system billable work as it happens.</p>
+{% if c.cur.can('manual.create') %}
+<div class="card" style="max-width:560px"><form method="post" enctype="multipart/form-data">{{ ui.csrf() }}
+<label for="wo">Work order (scan or type)</label><input id="wo" type="text" name="work_order_ref" value="{{ wo }}" autocomplete="off" placeholder="Scan the work-order barcode / QR">
+<button type="button" class="btn sec" id="scanbtn" style="margin-top:6px;display:none">Scan with camera</button><video id="scanvid" playsinline style="display:none;width:100%;margin-top:6px;border-radius:6px"></video>
+<label for="cust">Customer</label><select id="cust" name="customer" required>{% for cu in custs %}<option value="{{ cu.id }}">{{ cu.code }} · {{ cu.name }}</option>{% endfor %}</select>
+<label for="svc">Service</label><select id="svc" name="charge" required>{% for ch in charges %}<option value="{{ ch.id }}">{{ ch.name }} ({{ ch.default_uom }})</option>{% else %}<option value="">No manually capturable services set up</option>{% endfor %}</select>
+<div class="grid2"><div><label for="q">Quantity</label><input id="q" type="number" step="0.01" min="0.01" name="quantity" required inputmode="decimal"></div><div><label for="u">Unit</label><input id="u" type="text" name="uom" placeholder="as the service"></div></div>
+<label for="d">Date</label><input id="d" type="date" name="service_date" value="{{ today.isoformat() }}" required>
+<div class="grid2"><div><label for="st">Start</label><input id="st" type="time" name="start"></div><div><label for="en">End</label><input id="en" type="time" name="end"></div></div>
+<label for="n">Note</label><textarea id="n" name="note" rows="3" required placeholder="What was done and why"></textarea>
+<label for="ph">Photo (optional)</label><input id="ph" type="file" name="photo" accept="image/*" capture="environment">
+<p><button class="btn big">Send for review</button></p></form></div>{% endif %}
+{% if review %}<h2>Entries to review ({{ review|length }})</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Service</th><th class="n">Qty</th><th>Note</th><th>By</th><th>Decision</th></tr></thead><tbody>
+{% for e in review %}<tr><td>{{ e.service_date|date }}</td><td>{{ cmap[e.customer_id].code }}</td><td>{{ chmap[e.charge_code_id].name }}</td><td class="n">{{ e.quantity|qty }} {{ e.uom }}</td><td>{{ e.note }}{% if e.photo_ref %} · <a href="/work/photo/{{ e.id }}">photo</a>{% endif %}{% if e.work_order_ref %}<div class="small">WO {{ e.work_order_ref }}</div>{% endif %}</td><td>{{ users.get(e.entered_by) }}</td>
+<td><form method="post" action="/work/review/{{ e.id }}">{{ ui.csrf() }}<button class="btn" name="decision" value="accept">Accept</button> <input type="text" name="reason" placeholder="Reason to reject" aria-label="Reason to reject"><button class="btn sec" name="decision" value="reject">Reject</button></form></td></tr>{% endfor %}</tbody></table></div>{% endif %}
+<h2>Your entries</h2>{% if not mine %}<div class="empty">You have not recorded any work yet.</div>{% else %}
+<div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Service</th><th class="n">Qty</th><th>Status</th></tr></thead><tbody>
+{% for e in mine %}<tr><td>{{ e.service_date|date }}</td><td>{{ cmap[e.customer_id].code }}</td><td>{{ chmap[e.charge_code_id].name }}</td><td class="n">{{ e.quantity|qty }} {{ e.uom }}</td><td>{{ ui.status(e.status) }}{% if e.review_reason %}<div class="small">{{ e.review_reason }}</div>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+<script>
+(function(){ // G2: camera scanning where the browser supports BarcodeDetector; a handheld scanner types into the field anyway
+ if(!('BarcodeDetector' in window) || !navigator.mediaDevices){return;}
+ var btn=document.getElementById('scanbtn'), vid=document.getElementById('scanvid'), wo=document.getElementById('wo'); btn.style.display='inline-block';
+ btn.addEventListener('click', async function(){
+  var det=new BarcodeDetector({formats:['qr_code','code_128','code_39','ean_13']});
+  var stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}); vid.srcObject=stream; vid.style.display='block'; await vid.play();
+  var tick=async function(){ var codes=await det.detect(vid); if(codes.length){ wo.value=codes[0].rawValue; stream.getTracks().forEach(function(t){t.stop()}); vid.style.display='none'; return; } requestAnimationFrame(tick); };
+  tick();
+ });
+})();
+</script>
+{% endblock %}

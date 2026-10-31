@@ -1,0 +1,104 @@
+{
+ "weeks": 13,
+ "activity_events": 994631,
+ "setup_seconds": 1.9,
+ "import_seconds": 251.6,
+ "run_seconds": 356.4,
+ "total_seconds": 609.7,
+ "total_minutes": 10.16,
+ "target_minutes": 15,
+ "met": true,
+ "periods": [
+  [
+   "P01",
+   "succeeded",
+   77231,
+   2,
+   31.1
+  ],
+  [
+   "P02",
+   "succeeded",
+   75669,
+   1,
+   26.1
+  ],
+  [
+   "P03",
+   "succeeded",
+   77231,
+   2,
+   28.2
+  ],
+  [
+   "P04",
+   "succeeded",
+   75669,
+   1,
+   26.2
+  ],
+  [
+   "P05",
+   "succeeded",
+   77231,
+   2,
+   28.6
+  ],
+  [
+   "P06",
+   "succeeded",
+   75669,
+   1,
+   27.2
+  ],
+  [
+   "P07",
+   "succeeded",
+   77231,
+   2,
+   27.4
+  ],
+  [
+   "P08",
+   "succeeded",
+   75669,
+   1,
+   27.3
+  ],
+  [
+   "P09",
+   "succeeded",
+   77231,
+   2,
+   27.9
+  ],
+  [
+   "P10",
+   "succeeded",
+   75669,
+   1,
+   26.8
+  ],
+  [
+   "P11",
+   "succeeded",
+   77231,
+   2,
+   26.9
+  ],
+  [
+   "P12",
+   "succeeded",
+   75669,
+   1,
+   25.7
+  ],
+  [
+   "P13",
+   "succeeded",
+   77231,
+   2,
+   26.6
+  ]
+ ]
+}

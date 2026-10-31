@@ -1,0 +1,4 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ code }} · GiNi BillRight</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}"></head><body><main style="max-width:640px;margin:60px auto;padding:0 16px">
+<h1>{{ 'Not possible' if code == 409 else ('No access' if code == 403 else 'Something is wrong') }}</h1><div class="flash error" role="alert">{{ message }}</div>
+<p><a href="javascript:history.back()">← Back</a> · <a href="/">Home</a></p></main></body></html>

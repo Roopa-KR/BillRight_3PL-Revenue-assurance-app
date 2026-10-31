@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · GiNi BillRight</title><link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}"></head>
+<body><main style="max-width:420px;margin:60px auto;padding:0 16px">
+<h1>GiNi BillRight</h1><p class="sub">Bill for all the work you do, at the right rate, and know what every customer really earns you.</p>
+{% if sso %}<p><a class="btn big" href="/login/sso">Sign in with single sign-on</a></p>{% endif %}
+{% if dev %}<div class="card"><h3>Development sign-in</h3><p class="small muted">Only available when APP_ENV=development.</p>
+<form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="email">E-mail</label><input id="email" name="email" type="email" required autocomplete="username">
+{% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}<p><button class="btn">Sign in</button></p></form></div>{% endif %}
+{% if not sso and not dev %}<div class="flash error">Single sign-on is not configured. Set OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET and OIDC_REDIRECT_URI.</div>{% endif %}
+</main></body></html>
